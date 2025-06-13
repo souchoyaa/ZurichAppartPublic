@@ -2,8 +2,8 @@
 name: Run private code every 10 minutes
 
 on:
+  workflow_dispatch:
   schedule:
-    # « toutes les 10 minutes »
     - cron: '*/10 * * * *'
 
 jobs:
