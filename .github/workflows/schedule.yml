@@ -1,0 +1,59 @@
+name: Run private code every 59 minutes
+
+# 1) Donner la permission d'écriture sur le contenu (poussée de commit)
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/59 * * * *'
+
+jobs:
+  run-private-code:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 2) Checkout du repo public (workflow)
+      - name: Checkout workflow repo
+        uses: actions/checkout@v4
+
+      # 3) Checkout du repo privé en utilisant votre PAT
+      - name: Checkout private code
+        uses: actions/checkout@v4
+        with:
+          repository: souchoyaa/zurichAppart
+          token: ${{ secrets.PAT_PRIV_REPO }}
+          path: private
+          fetch-depth: 0
+          persist-credentials: false   # ← important pour conserver votre PAT
+
+      # 4) Installer Python et dépendances
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          if [ -f private/requirements.txt ]; then pip install -r private/requirements.txt; fi
+
+      # 5) Exécuter votre script qui met à jour la DB
+      - name: Run database_maker
+        run: python private/database_maker.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
+          GROQ_API_KEY:       ${{ secrets.GROQ_API_KEY }}
+          GOOGLE_API_KEY:     ${{ secrets.GOOGLE_API_KEY }}
+          URL_FETCH_PKS_2:    ${{ secrets.URL_FETCH_PKS_2 }}
+
+      # 6) Commit & Push de la DB mise à jour
+      - name: Commit and push database changes
+        run: |
+          cd private
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add processed_listings.db
+          git diff --cached --quiet || git commit -m "Automated DB update via Actions"
+          git push origin main
