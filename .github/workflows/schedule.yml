@@ -26,7 +26,8 @@ jobs:
           token: ${{ secrets.PAT_PRIV_REPO }}
           path: private
           fetch-depth: 0
-          persist-credentials: false   # ← important pour conserver votre PAT
+          persist-credentials: true   
+
 
       # 4) Installer Python et dépendances
       - name: Setup Python
@@ -51,10 +52,11 @@ jobs:
 
       # 6) Commit & Push de la DB mise à jour
       - name: Commit and push database changes
+        working-directory: private    
         run: |
-          cd private
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add processed_listings.db
           git diff --cached --quiet || git commit -m "Automated DB update via Actions"
-          git push origin main
+          git push origin main        # votre PAT est déjà configuré dans .git/config
+
