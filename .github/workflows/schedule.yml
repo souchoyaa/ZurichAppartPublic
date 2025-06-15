@@ -41,7 +41,7 @@ jobs:
       # 5) Exécuter votre script qui met à jour la DB
       - name: Run database_maker
         working-directory: private
-        run: python private/database_maker.py
+        run: python database_maker.py
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
